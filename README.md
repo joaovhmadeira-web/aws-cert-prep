@@ -123,11 +123,14 @@ O `id` é gerado por hash do enunciado (estável se a ordem mudar).
 
 ## 6. Como publicar no GitHub Pages
 
+**Publicado em:** https://joaovhmadeira-web.github.io/aws-cert-prep/ (repositório `joaovhmadeira-web/aws-cert-prep`, **público** — necessário para Pages gratuito; `Settings → Pages → Deploy from a branch → main / root`).
+
 1. Repositório → **Settings → Pages → Build and deployment → Deploy from a branch → `main` / `/ (root)`**. (Em conta gratuita o Pages exige repositório **público**.)
 2. O site fica em `https://<usuario>.github.io/<repo>/`. Todos os caminhos são relativos e o roteamento é por hash, então funciona em subpasta.
 3. Ao publicar novos dados, **incremente `DATA_VERSION`** em `js/datafiles.js` (invalida cache dos scripts e do service worker).
 4. No celular: abrir a URL e usar "Adicionar à tela inicial" (Android/Chrome e iOS/Safari).
 5. Teste local: `node tools/serve.js 8080` → http://localhost:8080 (service worker exige http/https).
+6. Cada `git push` para `main` publica uma nova versão automaticamente (build "legacy" do Pages, sem necessidade de Actions); a propagação leva ~1 minuto.
 
 ## 7. Como adicionar conteúdo
 
