@@ -77,8 +77,9 @@ main { padding: 16px 14px calc(var(--nav-h) + var(--safe-b) + 24px); max-width: 
 .btn.block { display: flex; width: 100%; }
 .btn.sm { min-height: 36px; padding: 6px 12px; font-size: .88rem; }
 .btn:disabled { opacity: .5; cursor: not-allowed; }
-.chip { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: .75rem; font-weight: 600; background: var(--surface2); color: var(--muted); border: 1px solid var(--border); margin: 0 4px 4px 0; }
+.chip { display: inline-flex; align-items: center; padding: 2px 9px; border-radius: 999px; font-size: .75rem; font-weight: 600; background: var(--surface2); color: var(--muted); border: 1px solid var(--border); margin: 0 4px 4px 0; }
 .chip.svc { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.svc-ico { width: 14px; height: 14px; border-radius: 3px; margin-right: 5px; flex: none; }
 .chip.lvl-foundational { background: #e3f4ea; color: #146c2e; } .chip.lvl-associate { background: #e3eefc; color: #0b57b0; }
 .chip.lvl-professional { background: #f3e7fb; color: #7a2aa8; } .chip.lvl-specialty { background: #fdeadf; color: #b04a08; }
 .chip.st-retiring, .chip.st-updating { background: var(--warn-soft); color: var(--warn); } .chip.st-beta { background: #ede7ff; color: #5b34c9; } .chip.st-active { background: var(--ok-soft); color: var(--ok); }

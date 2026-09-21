@@ -2,7 +2,7 @@
 
 Sistema de preparação para certificações AWS: informações oficiais das provas, conteúdo de estudo, simulados, vídeos e um motor que indica material conforme os seus erros. É um site **estático** (HTML/CSS/JS puro, sem build), pensado para **GitHub Pages** e **uso no celular** (PWA instalável, funciona offline).
 
-> **Última atualização deste documento:** 2026-09-20 · **Estado:** base funcional montada, conteúdo parcial, **ainda não testada no navegador** (ver seção 8).
+> **Última atualização deste documento:** 2026-09-20 · **Estado:** app completo com trilhas, vídeos, materiais oficiais, **banco de questões nas 13 provas** e ícones oficiais de serviço, **smoke test headless feito** (ver seção 8) — falta apenas testar manualmente num navegador/celular real e ampliar as lições de estudo para além de CLF/SAA/DVA/SOA.
 
 ---
 
@@ -58,11 +58,13 @@ js/
   views-certs.js           Provas (comparativo/detalhe), Estudar (lições), Materiais
   views-quiz.js            Simulados (setup, execução, resultado/revisão)
   views-videos.js          Vídeos
+  views-tracks.js          Trilhas (agrupamento de provas por objetivo + progresso comparado entre elas)
   main.js                  valida tags contra a taxonomia e chama AWSPREP.boot()
 data/
   taxonomy.js              serviços (slug -> [nome, categoria]) e tópicos (slug -> nome); AWSPREP.add()
   certs.js                 dados oficiais das provas + regras gerais
   guides.js                task statements dos exam guides (gerado)
+  tracks.js                trilhas: agrupamentos de certId's por objetivo (AWSPREP.tracks)
   study/*.js               lições (AWSPREP.add("lessons", [...]))
   questions/<cert>.js      questões (AWSPREP.addQ("<cert>", [...]))
 tools/serve.js             servidor estático local (node tools/serve.js 8080)
@@ -71,7 +73,10 @@ tools/serve.js             servidor estático local (node tools/serve.js 8080)
 Tudo é carregado por `<script>` (não `fetch`), então o app também abre por `file://` (exceto vídeo embutido, que precisa de http/https).
 
 ### Rotas (hash)
-`#/` painel · `#/provas`, `#/provas/<id>` · `#/estudar`, `#/estudar/<lessonId>`, `#/materiais` · `#/simulados`, `#/simulados/run`, `#/simulados/resultado/<n>` · `#/videos` · `#/config`
+`#/` painel · `#/trilhas`, `#/trilhas/<id>` · `#/provas`, `#/provas/<id>` · `#/estudar`, `#/estudar/<lessonId>`, `#/materiais` · `#/simulados`, `#/simulados/run`, `#/simulados/resultado/<n>` · `#/videos` · `#/config`
+
+### Trilhas (`data/tracks.js`, `js/views-tracks.js`)
+Uma trilha (`{ id, name, desc, certs:[certId,...] }`) agrupa certificações por objetivo profissional (ex.: Arquitetura, Dados & ML, Segurança); uma mesma prova pode aparecer em mais de uma trilha, e nenhuma é pré-requisito da outra (`AWSPREP.general.prerequisites`). `#/trilhas` lista todas com uma barra de progresso agregada e um chip de status por certificação (não iniciada / em andamento / pronta — nota do último simulado ≥ nota mínima); `#/trilhas/<id>` detalha cada prova da trilha (lições, vídeos, último simulado, nº de tentativas) e permite trocar a certificação em foco sem sair da tela. Isso dá uma visão do progresso **entre** certificações diferentes, complementando o Painel (que só mostra a prova em foco no seletor do topo).
 
 ### Modos de simulado
 Completo (cronometrado, nº de questões e tempo proporcionais ao da prova real, distribuição pelos pesos oficiais), Prática (10/20 com feedback imediato), Por domínio, Pontos fracos (usa o perfil de necessidade), Refazer erradas. A sessão em andamento é salva em `localStorage` (`awsprep.session`) para sobreviver a aba descartada no celular. A nota é uma **estimativa linear** (`100 + 900*acerto%`), rotulada como tal.
@@ -101,13 +106,13 @@ O `id` é gerado por hash do enunciado (estável se a ordem mudar).
   body: `markdown` }  // ##, listas, tabelas, **negrito**, `código`, > **Dica de prova:** / > **Pegadinha:**
 ```
 
-**Vídeo** (`AWSPREP.add("videos", [...])`) — *ainda não criado*
+**Vídeo** (`data/videos.js`, `AWSPREP.add("videos", [...])`)
 ```js
 { id: "yt-XXXXXXXXXXX", yt: "XXXXXXXXXXX", title, ch: "canal", lang: "pt"|"en", dur: minutos,
   kind: "course"|"deepdive"|"explainer", lvl: 1-3, y: 2025,
   dom: { saa:[1,2] }, svc: [...], top: [...] }
 ```
-**Material oficial** (`AWSPREP.add("resources", [...])`) — *ainda não criado*: `{ id, title, url, type: "whitepaper"|"docs"|"skillbuilder"|"lab"|"practice", free: true, desc, lvl, dom, svc, top }`.
+**Material oficial** (`data/resources.js`, `AWSPREP.add("resources", [...])`): `{ id, title, url, type: "whitepaper"|"docs"|"skillbuilder"|"lab"|"practice", free: true, desc, lvl, dom, svc, top }`. `dom` pode usar a chave especial `"*"` para materiais transversais (não específicos de uma prova, ex.: Well-Architected Framework).
 
 ## 5. Motor de recomendação (js/recommender.js)
 
@@ -143,19 +148,23 @@ O `id` é gerado por hash do enunciado (estável se a ordem mudar).
 - [x] Motor de recomendação por metadados.
 - [x] PWA (manifest, service worker, ícones), `.nojekyll`, tema claro/escuro, mobile-first, ícones SVG sem emojis.
 - [x] **26 lições** compartilhadas (fundamentos, IAM, multi-conta, KMS, detecção, EC2, ELB/ASG, S3, storage, VPC, conectividade híbrida, Route 53/CloudFront, RDS/Aurora, DynamoDB, escolha de banco, Lambda, contêineres, integração, API GW/Cognito, observabilidade, IaC/CI-CD, SSM/Config, DR, custos/suporte, migração). Cobrem principalmente CLF, SAA, DVA, SOA e partes de SAP/DOP/SCS/ANS.
-- [x] **28 questões** originais de SAA-C03 distribuídas pelos 4 domínios.
+- [x] **350 questões** originais de simulado cobrindo as **13 provas** (`data/questions/<cert>.js`), distribuídas proporcionalmente aos pesos oficiais de cada domínio, cada uma com explicação comentando a alternativa certa e cada distrator: `saa` 28, `clf` 28, `aif` 28, `aib` 22, `dva` 28, `soa` 28, `dea` 28, `mla` 28 (guia MLA-C02), `sap` 26, `dop` 26, `aip` 26, `scs` 28, `ans` 26. Validado estruturalmente (índices de resposta, nº de opções por tipo, tags da taxonomia, domínios válidos) e testado ponta a ponta (montagem dos 5 modos de simulado, correção e recomendador) para as 13 certificações — zero problemas.
 - [x] Verificado na fonte oficial: planos de suporte atuais (Business Support+, Enterprise Support, Unified Operations; a lição cita também a nomenclatura clássica).
+- [x] **Trilhas** (`#/trilhas`): 8 agrupamentos de certificações por objetivo (Fundamentos, Arquitetura, Dev & DevOps, Operações, Dados & ML, IA, Segurança, Redes), com progresso comparado entre as provas de cada trilha (lições, vídeos, último simulado) e troca rápida da certificação em foco.
+- [x] **Smoke test headless** (Node + jsdom, já que não há navegador disponível neste ambiente): carrega todos os scripts na ordem de `datafiles.js`, chama `AWSPREP.boot()` e navega por todas as rotas, para todas as 13 certificações, verificando ausência de exceções e de avisos de tags fora da taxonomia. Encontrou e corrigiu **dois bugs de sintaxe que impediam o app inteiro de carregar**: regex de rotas do menu inferior sem escapar `/` em `js/ui.js` (`TABS`) e aspas trocadas no botão "Anterior" do simulado em `js/views-quiz.js`. Ainda falta o teste manual num navegador/celular real (viewport, toque, PWA).
+- [x] **87 vídeos** do YouTube (`data/videos.js`), todos com o ID validado via oEmbed antes de entrar no arquivo (nenhum inventado): cursos completos gratuitos (freeCodeCamp, Go Cloud Architects, Johnny Chivers etc.), deep dives oficiais AWS re:Invent e explainers curtos, cobrindo as 13 provas (78 em inglês, 9 em PT-BR — canais Zappts, Canal da Cloud, AWS Developers LATAM, Jean Diogo, Augusto Galego, Cloud For All). AIB (beta, muito recente) ficou com só 2 por falta de conteúdo real disponível — não foram forçados vídeos genéricos.
+- [x] **63 materiais oficiais** (`data/resources.js`), todas as URLs validadas: exam guide + Skill Builder Exam Prep Plan + Official Practice Question Set gratuito para cada uma das 13 provas, mais 22 materiais transversais (Well-Architected Framework e os 6 pilares + 3 lentes, IAM, Shared Responsibility Model, políticas antes da prova, um workshop oficial de rede, docs de Bedrock/SageMaker, IA responsável, AWS CAF, Pricing Calculator, Compliance Programs).
+- [x] **Ícones oficiais de serviço** (`icons/services/`, 140/144 serviços da taxonomia): baixados do pacote oficial AWS Architecture Icons e usados nos chips de serviço em toda a interface (lições, vídeos, materiais, revisão de questões). Ver seção 10 para o licenciamento e o aviso de não afiliação com a AWS.
 
 ### Pendente (ordem sugerida)
-1. **Teste de fumaça no navegador** (nunca foi executado): abrir `http://localhost:8080`, olhar o console (erros de sintaxe, tags fora da taxonomia), navegar por todas as rotas, fazer um simulado até o fim, testar em viewport de celular. Ponto de atenção conhecido: sobra uma variável `wrongN` sem uso em `views-quiz.js` (inofensiva).
-2. **Vídeos** (`data/videos.js`): pesquisar no YouTube via `browser-harness`, validar cada ID (oEmbed `https://www.youtube.com/oembed?url=...` → 200) e cadastrar com `dom/svc/top`. Meta: ~120 vídeos, com prioridade a canais oficiais AWS e cursos completos gratuitos por certificação, incluindo PT-BR. Incluir no `datafiles.js`.
-3. **Materiais** (`data/resources.js`): exam guides, Skill Builder (planos de preparação, *Official Practice Question Sets* e *Official Pretests* gratuitos), whitepapers (Well-Architected, DR, Security Pillar), docs/labs.
-4. **Lições que faltam**: engenharia de dados (Kinesis/Glue/Athena/EMR/Lake Formation/Redshift, formatos e particionamento, governança), IA/ML/GenAI (fundamentos, Bedrock, RAG, agentes/AgentCore, IA responsável, SageMaker: preparo, treino, deploy/MLOps, monitoramento), AI Business Strategist (estratégia, valor/ROI, governança, prontidão), Professional/Specialty (organização complexa, migração/modernização, segurança avançada, redes avançadas: TGW/Cloud WAN/DX/BGP/IPv6).
-5. **Questões das demais 12 provas**: meta ~25–30 por prova (SAA ampliar para 40+), sempre originais, com explicação de cada distrator e `r` coerente. Prioridade: CLF, AIF, DVA, SOA, DEA, MLA, DOP, SCS, SAP, AIP, ANS, AIB.
-6. **Verificar URLs** em `data/certs.js` (`guideUrl` e `skillBuilder` de algumas provas foram inferidas por padrão, não confirmadas: DVA-C02 Skill Builder, SAP-C02 e DOP-C02 guide/Skill Builder etc.).
-7. **Script de validação** (`tools/validate.js`): tags existentes na taxonomia, `a` dentro de `o`, domínio válido por cert, IDs únicos, links de vídeo respondendo.
-8. Ajustes de UX no celular após teste real (tamanho de toque, rolagem do navegador de questões, PWA no iOS).
-9. Opcional: sincronização real entre dispositivos (ex.: GitHub Gist do próprio usuário) — hoje só export/import manual.
+1. **Teste manual em navegador/celular real**: abrir `http://localhost:8080` (o smoke test headless da seção acima já cobriu ausência de erros de carregamento/rota, inclusive montando os 5 modos de simulado nas 13 provas), fazer um simulado até o fim na tela, assistir um vídeo e testar em viewport de celular.
+2. **Ampliar o banco de questões**: hoje entre 22 e 28 por prova; aumentar gradualmente (meta original era 25-30, já atingida na maioria) e considerar levar SAA a 40+ por ser a prova mais popular.
+3. **Lições que faltam**: engenharia de dados (Kinesis/Glue/Athena/EMR/Lake Formation/Redshift, formatos e particionamento, governança), IA/ML/GenAI (fundamentos, Bedrock, RAG, agentes/AgentCore, IA responsável, SageMaker: preparo, treino, deploy/MLOps, monitoramento), AI Business Strategist (estratégia, valor/ROI, governança, prontidão), Professional/Specialty (organização complexa, migração/modernização, segurança avançada, redes avançadas: TGW/Cloud WAN/DX/BGP/IPv6). Hoje as lições cobrem só CLF/SAA/DVA/SOA e partes de SAP/DOP/SCS/ANS — as demais 9 provas dependem só de vídeos/materiais/questões por enquanto.
+4. **Verificar URLs** em `data/certs.js` (`guideUrl` e `skillBuilder` de algumas provas foram inferidas por padrão, não confirmadas: DVA-C02 Skill Builder, SAP-C02 e DOP-C02 guide/Skill Builder etc. — parte já foi revalidada ao montar `data/resources.js`).
+5. **Reforçar vídeos de AIB, MLA, DOP e AIP** (as certs com menos vídeos hoje: 2, 6, 4 e 8 respectivamente) conforme surgir mais conteúdo público sobre elas.
+6. **Script de validação** (`tools/validate.js`): tags existentes na taxonomia, `a` dentro de `o`, domínio válido por cert, IDs únicos, links de vídeo respondendo. Poderia rodar o mesmo smoke test de carregamento/rotas/simulados como parte do CI.
+7. Ajustes de UX no celular após teste real (tamanho de toque, rolagem do navegador de questões, PWA no iOS).
+8. Opcional: sincronização real entre dispositivos (ex.: GitHub Gist do próprio usuário) — hoje só export/import manual.
 
 ### Riscos / avisos
 - Fatos que mudam rápido (preços, datas de descontinuação, nomes de planos) foram verificados em 2026-09-20; reconfirmar antes de agendar prova. `AWSPREP.meta.collectedAt` mostra a data na interface.
@@ -167,3 +176,9 @@ O `id` é gerado por hash do enunciado (estável se a ordem mudar).
 - https://aws.amazon.com/certification/faqs/ e /policies/before-testing/
 - Exam guides: `d1.awsstatic.com/training-and-certification/docs-*/…_Exam-Guide.pdf` e `docs.aws.amazon.com/aws-certification/latest/<prova>/<prova>.html`
 - https://aws.amazon.com/premiumsupport/plans/
+
+## 10. Ícones de serviço e marcas (`icons/services/`)
+
+`icons/services/<slug>.svg` (140 arquivos, ~525 KB) são os **AWS Architecture Icons** oficiais (pacote `Icon-package_07312026`, baixado de `aws.amazon.com/architecture/icons/`), **não modificados**, usados apenas para representar o respectivo serviço AWS nos chips de serviço da interface (`A.svcIcon(slug)` em `js/lib.js`, chamado por `A.tagChips` em `js/ui.js`). O mapeamento slug → arquivo está em `data/service-icons.js`; 4 slugs da taxonomia não têm ícone oficial correspondente (`sct`, `sam`, `cost-anomaly`, `migration-hub` — ficam só com o chip de texto) e alguns slugs de sub-recursos do SageMaker/Bedrock (`clarify`, `model-monitor`, `jumpstart`, `data-wrangler`, `feature-store`, `sm-pipelines`, `model-registry`, `sm-endpoints`, `bedrock-kb`, `bedrock-guardrails`) reaproveitam o ícone do serviço "pai" (SageMaker AI / Bedrock), pois a AWS não distribui um ícone de arquitetura próprio para eles.
+
+**Licenciamento:** conforme as [Diretrizes de marca da AWS](https://aws.amazon.com/trademark-guidelines/), os ícones são propriedade da Amazon Web Services, Inc.; o uso permitido é para representar os respectivos serviços, sem alterar cor/proporção/forma e sem implicar afiliação, patrocínio ou endosso da AWS. Este projeto é um estudo pessoal, não comercial, não afiliado, não endossado e não patrocinado pela AWS — esse aviso aparece em `#/config`. "AWS" e os nomes de serviços citados são marcas da Amazon.com, Inc. ou afiliadas. Para atualizar os ícones em uma nova versão trimestral do pacote, repita o processo de correspondência slug → arquivo (nomes de arquivo usam o nome completo do serviço, não a sigla, ex. `Arch_Amazon-Elastic-Container-Service_48.svg` para `ecs`) e substitua os SVGs em `icons/services/`.

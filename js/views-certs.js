@@ -113,7 +113,7 @@
       var rr = A.rec.forCert(c.id, "resources", 4).items;
       if (rr.length) h += "<h2>Recomendados para você</h2>" + rr.map(function (r) { return A.resourceCard(r.item, A.rec.whyText(r.why)); }).join("");
     }
-    Object.keys(types).forEach(function (t) { h += "<h2>" + esc(t) + "</h2>" + types[t].map(function (r) { return A.resourceCard(r); }).join(""); });
+    Object.keys(types).forEach(function (t) { h += "<h2>" + esc(A.resTypeLabel(t)) + "</h2>" + types[t].map(function (r) { return A.resourceCard(r); }).join(""); });
     if (!all.length) h += '<div class="notice">Nenhum material cadastrado para esta certificação.</div>';
     A.render(h);
   });

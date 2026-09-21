@@ -113,7 +113,7 @@
         if (S.checked[qid]) c2.push(A.gradeAnswer(A.qById[qid], S.answers[qid]) ? "ok" : "no");
         return '<button class="' + c2.join(" ") + '" data-g="' + i + '">' + (i + 1) + "</button>";
       }).join("") + "</div></details>";
-      h += '<div class="sticky-actions"><button class="btn" id="prevBtn" aria-label="Anterior" ' + (S.idx ? "" : "disabled") + ">' + A.icon("left") + '</button>";
+      h += '<div class="sticky-actions"><button class="btn" id="prevBtn" aria-label="Anterior" ' + (S.idx ? "" : "disabled") + ">" + A.icon("left") + "</button>";
       if (!exam && !checked) h += '<button class="btn accent" id="chkBtn" ' + (chosen.length ? "" : "disabled") + ">Verificar</button>";
       h += S.idx < n - 1 ? '<button class="btn primary" id="nextBtn">Próxima ' + A.icon("right") + '</button>' : '<button class="btn primary" id="endBtn">Finalizar</button>';
       h += "</div>";

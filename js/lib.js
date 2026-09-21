@@ -51,6 +51,11 @@
 
   A.svcName = function (slug) { return (A.services[slug] && A.services[slug][0]) || slug; };
   A.topicName = function (slug) { return A.topics[slug] || slug; };
+  A.svcIcon = function (slug) {
+    return (A.serviceIcons && A.serviceIcons[slug]) ? '<img class="svc-ico" src="icons/services/' + slug + '.svg" alt="" loading="lazy">' : "";
+  };
+  var RES_TYPE_LABELS = { whitepaper: "Whitepaper", docs: "Documentação oficial", skillbuilder: "AWS Skill Builder", lab: "Lab / ferramenta", practice: "Simulado oficial" };
+  A.resTypeLabel = function (t) { return RES_TYPE_LABELS[t] || t; };
 
   /* ---------- Markdown mínimo: ##/###, listas, **negrito**, `código`, tabelas, > dicas ---------- */
   function inline(s) {

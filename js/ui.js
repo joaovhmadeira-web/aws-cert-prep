@@ -5,8 +5,8 @@
   A.route = function (re, fn) { routes.push([re, fn]); };
   A.go = function (h) { location.hash = h; };
 
-  var TABS = [["#/", "home", "Início", /^#/?$/], ["#/provas", "clipboard", "Provas", /^#/provas/], ["#/estudar", "book", "Estudar", /^#/(estudar|materiais)/],
-              ["#/simulados", "exam", "Simulados", /^#/simulados/], ["#/videos", "play", "Vídeos", /^#/videos/]];
+  var TABS = [["#/", "home", "Início", /^#\/?$/], ["#/trilhas", "layers", "Trilhas", /^#\/trilhas/], ["#/provas", "clipboard", "Provas", /^#\/provas/], ["#/estudar", "book", "Estudar", /^#\/(estudar|materiais)/],
+              ["#/simulados", "exam", "Simulados", /^#\/simulados/], ["#/videos", "play", "Vídeos", /^#\/videos/]];
 
   A.render = function (html) { $("#app").innerHTML = '<div class="wrap">' + html + "</div>"; window.scrollTo(0, 0); };
   A.curCert = function () { var id = A.store.get().profile.cert; return id ? A.certById(id) : null; };
@@ -19,7 +19,7 @@
   };
   A.tagChips = function (item, max) {
     var out = [];
-    (item.svc || []).slice(0, max || 4).forEach(function (s) { out.push(A.chip(A.svcName(s), "svc")); });
+    (item.svc || []).slice(0, max || 4).forEach(function (s) { out.push('<span class="chip svc">' + A.svcIcon(s) + esc(A.svcName(s)) + "</span>"); });
     (item.top || []).slice(0, 2).forEach(function (t) { out.push(A.chip(A.topicName(t))); });
     return out.join("");
   };
@@ -45,7 +45,7 @@
   };
   A.resourceCard = function (r, why) {
     var done = A.store.has("resDone", r.id);
-    return '<div class="card"><strong>' + esc(r.title) + "</strong> " + A.chip(r.type) + (r.free ? A.chip("grátis", "st-active") : A.chip("pago")) +
+    return '<div class="card"><strong>' + esc(r.title) + "</strong> " + A.chip(A.resTypeLabel(r.type)) + (r.free ? A.chip("grátis", "st-active") : A.chip("pago")) +
       '<div class="small muted">' + esc(r.desc || "") + "</div><div>" + A.tagChips(r, 3) + "</div>" +
       (why ? '<div class="why"><b>Por que:</b> ' + esc(why) + "</div>" : "") +
       '<div class="row" style="margin-top:8px"><a class="btn sm accent" target="_blank" rel="noopener" href="' + esc(r.url) + '">Abrir ' + A.icon("ext") + '</a>' +
@@ -112,7 +112,7 @@
           return '<button class="card btn" style="display:block;text-align:left;font-weight:400" data-pick="' + x.id + '"><strong>' + esc(x.short) + "</strong> <span class=\"muted small\">" + esc(x.code) + "</span><div>" + A.certBadges(x) + '</div><div class="small muted">' + esc(x.who) + "</div></button>";
         }).join("") + "</div>";
       });
-      A.render(h + '<div class="notice info">Dica: você também pode ver todas as provas lado a lado em <a href="#/provas">Provas</a>.</div>');
+      A.render(h + '<div class="notice info">Dica: você também pode ver todas as provas lado a lado em <a href="#/provas">Provas</a>, ou explorar agrupamentos por objetivo em <a href="#/trilhas">Trilhas</a>.</div>');
       A.$$("[data-pick]").forEach(function (b) { b.addEventListener("click", function () { A.setCertAndRefresh(b.dataset.pick); }); });
       return;
     }
@@ -152,7 +152,7 @@
     h += '<h2>Progresso de estudo</h2><div class="card"><div class="small">Lições: ' + lDone + "/" + lessons.length + "</div>" + A.bar(lessons.length ? 100 * lDone / lessons.length : 0, "ok") +
       '<div class="small" style="margin-top:8px">Vídeos: ' + vDone + "/" + vids.length + "</div>" + A.bar(vids.length ? 100 * vDone / vids.length : 0) +
       '<div class="small" style="margin-top:8px">Banco de questões: ' + qn + ' questões</div></div>' +
-      '<div class="grid c3"><a class="btn" href="#/provas/' + c.id + '">' + A.icon("clipboard") + ' Info da prova</a><a class="btn" href="#/estudar">' + A.icon("book") + ' Estudar</a><a class="btn" href="#/simulados">' + A.icon("exam") + ' Simulados</a></div>';
+      '<div class="grid c4"><a class="btn" href="#/provas/' + c.id + '">' + A.icon("clipboard") + ' Info da prova</a><a class="btn" href="#/estudar">' + A.icon("book") + ' Estudar</a><a class="btn" href="#/simulados">' + A.icon("exam") + ' Simulados</a><a class="btn" href="#/trilhas">' + A.icon("layers") + " Trilhas</a></div>";
     A.render(h);
     var ed = $("#examDate");
     if (ed) ed.addEventListener("change", function () { var p = A.store.get().profile; p.exams = p.exams || {}; p.exams[c.id] = ed.value; A.store.save(); A.refresh(); });
@@ -167,7 +167,7 @@
       '<textarea id="syncCode" rows="4" readonly></textarea><div class="row" style="margin-top:8px"><button class="btn sm" id="cpBtn">Copiar código</button><button class="btn sm" id="dlBtn">Baixar arquivo</button></div>' +
       '<label class="f">Colar código de outro aparelho (substitui o progresso atual)</label><textarea id="impCode" rows="3" placeholder="Cole aqui o código de sincronização"></textarea>' +
       '<div class="row" style="margin-top:8px"><button class="btn sm accent" id="impBtn">Importar código</button><label class="btn sm">Importar arquivo<input type="file" id="impFile" accept="application/json" style="display:none"></label></div><div id="syncMsg" class="small" style="margin-top:6px"></div></div>' +
-      '<div class="card"><h3>Sobre o conteúdo e as questões</h3><p class="small muted">Dados das provas (custo, duração, domínios, nota mínima) vieram das páginas e exam guides oficiais da AWS em ' + esc(A.meta.collectedAt) + '. As questões de simulado são <b>originais</b>, escritas no estilo da prova e alinhadas aos domínios oficiais — este projeto <b>não usa questões vazadas (braindumps)</b>, que violam o acordo de confidencialidade da AWS. Vídeos são links para conteúdo público no YouTube.</p></div>' +
+      '<div class="card"><h3>Sobre o conteúdo e as questões</h3><p class="small muted">Dados das provas (custo, duração, domínios, nota mínima) vieram das páginas e exam guides oficiais da AWS em ' + esc(A.meta.collectedAt) + '. As questões de simulado são <b>originais</b>, escritas no estilo da prova e alinhadas aos domínios oficiais — este projeto <b>não usa questões vazadas (braindumps)</b>, que violam o acordo de confidencialidade da AWS. Vídeos são links para conteúdo público no YouTube. Os ícones de serviço são os <b>AWS Architecture Icons</b> oficiais, não modificados, usados apenas para identificar cada serviço. <b>Este é um projeto de estudo pessoal, não afiliado, endossado ou patrocinado pela Amazon Web Services, Inc.</b> AWS e os nomes de serviços citados são marcas da Amazon.com, Inc. ou afiliadas.</p></div>' +
       '<div class="card"><h3>Zona de risco</h3><button class="btn sm" id="resetBtn" style="color:var(--bad)">Apagar todo o progresso deste aparelho</button></div>');
     var code = btoa(unescape(encodeURIComponent(A.store.exportJson())));
     $("#syncCode").value = code;
