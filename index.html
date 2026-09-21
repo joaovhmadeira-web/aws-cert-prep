@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ff9900">
+<meta name="description" content="Preparação completa para certificações AWS: conteúdo de estudo, simulados, vídeos e informações oficiais das provas.">
+<title>AWS Cert Prep</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="AWS Prep">
+<link rel="stylesheet" href="css/style.css">
+<script>
+  // aplica o tema salvo antes da pintura (evita "flash")
+  try { var t = localStorage.getItem("awsprep.theme"); if (t) document.documentElement.setAttribute("data-theme", t); } catch (e) {}
+</script>
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="#/"><div class="logo">AWS</div><span class="txt">Cert Prep</span></a>
+  <select id="certPick" class="certpick" aria-label="Certificação em foco"></select>
+  <span class="spacer"></span>
+  <button class="iconbtn" id="themeBtn" aria-label="Alternar tema"></button>
+  <a class="iconbtn" id="cfgBtn" href="#/config" aria-label="Configurações"></a>
+</header>
+<main id="app"><div class="wrap"><p class="muted">Carregando…</p></div></main>
+<nav class="nav" id="nav" aria-label="Navegação principal"></nav>
+
+<script src="js/datafiles.js"></script>
+<script>
+  // carrega scripts na ordem (síncrono); ?v= evita cache antigo no GitHub Pages
+  (function () {
+    var v = window.DATA_VERSION;
+    window.DATA_FILES.forEach(function (f) { document.write('<script src="' + f + "?v=" + v + '"><\/script>'); });
+  })();
+</script>
+<script>
+  if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {
+    window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () {}); });
+  }
+</script>
+</body>
+</html>
